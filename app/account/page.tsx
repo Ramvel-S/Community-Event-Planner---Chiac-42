@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 
 export default function AccountPage() {
     const router = useRouter();
-    const [user, setUser] = useState(null);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
         // Check if user is in guest mode

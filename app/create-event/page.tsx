@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { categories } from '@/lib/mockData';
 
@@ -32,7 +32,7 @@ export default function CreateEventPage() {
         }
     }, [router]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
         // Form the time range string
@@ -41,7 +41,8 @@ export default function CreateEventPage() {
             : formData.startTime;
 
         // Get current user
-        const loggedInUser = JSON.parse(localStorage.getItem('loggedInUser'));
+        const stored = localStorage.getItem('loggedInUser');
+        const loggedInUser = stored ? JSON.parse(stored) : null;
 
         // Create new event object
         const newEvent = {

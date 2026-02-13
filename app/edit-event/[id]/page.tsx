@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { mockEvents, categories } from '@/lib/mockData';
 
 export default function EditEventPage() {
     const router = useRouter();
     const params = useParams();
-    const eventId = parseInt(params.id);
+    const eventId = parseInt(Array.isArray(params?.id) ? params.id[0] : String(params?.id));
 
-    const [event, setEvent] = useState(null);
+    const [event, setEvent] = useState<any>(null);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -33,7 +33,7 @@ export default function EditEventPage() {
         const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
         // Fallback to mockEvents just in case
         const allEvents = storedEvents.length > 0 ? storedEvents : mockEvents;
-        const foundEvent = allEvents.find(e => e.id === eventId);
+        const foundEvent = allEvents.find((e: any) => e.id === eventId);
         setEvent(foundEvent);
 
         if (foundEvent) {
@@ -74,7 +74,7 @@ export default function EditEventPage() {
         );
     }
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
 
         const timeRange = formData.startTime && formData.endTime
@@ -83,7 +83,7 @@ export default function EditEventPage() {
 
         // Update event in localStorage
         const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        const updatedEvents = storedEvents.map(e => {
+        const updatedEvents = storedEvents.map((e: any) => {
             if (e.id === eventId) {
                 return {
                     ...e,

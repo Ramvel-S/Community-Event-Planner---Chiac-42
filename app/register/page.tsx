@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,7 +14,7 @@ export default function RegisterPage() {
     });
     const [error, setError] = useState('');
 
-    const handleSubmit = (e) => {
+    const handleSubmit = (e: FormEvent) => {
         e.preventDefault();
         setError('');
 

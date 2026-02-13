@@ -7,10 +7,10 @@ import { mockEvents } from '@/lib/mockData';
 export default function EventDetailsPage() {
     const router = useRouter();
     const params = useParams();
-    const eventId = parseInt(params.id);
+    const eventId = parseInt(Array.isArray(params?.id) ? params.id[0] : String(params?.id));
 
-    const [event, setEvent] = useState(null);
-    const [user, setUser] = useState(null);
+    const [event, setEvent] = useState<any>(null);
+    const [user, setUser] = useState<any>(null);
     const [isGuest, setIsGuest] = useState(false);
     const [hasRSVPd, setHasRSVPd] = useState(false);
 
@@ -20,7 +20,7 @@ export default function EventDetailsPage() {
         // Fallback to mockEvents if localStorage is empty (shouldn't happen due to initialization in events page)
         const allEvents = storedEvents.length > 0 ? storedEvents : mockEvents;
 
-        const foundEvent = allEvents.find(e => e.id === eventId);
+        const foundEvent = allEvents.find((e: any) => e.id === eventId);
         setEvent(foundEvent);
 
         if (!foundEvent) return;
@@ -44,7 +44,7 @@ export default function EventDetailsPage() {
         setUser(userData);
 
         // Check if user is in attendees list
-        const isAttending = foundEvent.attendees.some(a => a.id === userData.id);
+        const isAttending = foundEvent.attendees.some((a: any) => a.id === userData.id);
         setHasRSVPd(isAttending);
 
         // Also check legacy localStorage key just in case
@@ -79,17 +79,17 @@ export default function EventDetailsPage() {
 
         // Update event attendees in localStorage
         const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        const updatedEvents = storedEvents.map(e => {
+        const updatedEvents = storedEvents.map((e: any) => {
             if (e.id === event.id) {
                 let updatedAttendees = [...e.attendees];
                 if (newRSVPStatus) {
                     // Add user to attendees if not already there
-                    if (!updatedAttendees.some(a => a.id === user.id)) {
+                    if (!updatedAttendees.some((a: any) => a.id === user.id)) {
                         updatedAttendees.push({ id: user.id, username: user.username });
                     }
                 } else {
                     // Remove user from attendees
-                    updatedAttendees = updatedAttendees.filter(a => a.id !== user.id);
+                    updatedAttendees = updatedAttendees.filter((a: any) => a.id !== user.id);
                 }
                 // Update the local event object as well to reflect immediately in UI
                 setEvent({ ...e, attendees: updatedAttendees });
@@ -121,7 +121,7 @@ export default function EventDetailsPage() {
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this event?')) {
             const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-            const updatedEvents = storedEvents.filter(e => e.id !== event.id);
+            const updatedEvents = storedEvents.filter((e: any) => e.id !== event.id);
             localStorage.setItem('events', JSON.stringify(updatedEvents));
 
             alert('Event deleted successfully!');
@@ -208,7 +208,7 @@ export default function EventDetailsPage() {
                 <div className="attendees-section">
                     <h2>Attendees ({event.attendees.length})</h2>
                     <div className="attendees-list">
-                        {event.attendees.map(attendee => (
+                        {event.attendees.map((attendee: any) => (
                             <span key={attendee.id} className="attendee-badge">
                                 👤 {attendee.username}
                             </span>

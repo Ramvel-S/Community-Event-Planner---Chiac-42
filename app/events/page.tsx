@@ -15,7 +15,7 @@ export default function EventsPage() {
     const [endTime, setEndTime] = useState('');
     const [location, setLocation] = useState('');
 
-    const [events, setEvents] = useState([]);
+    const [events, setEvents] = useState<any[]>([]);
 
     // Load events from localStorage or seed with mock data
     useEffect(() => {
@@ -29,7 +29,7 @@ export default function EventsPage() {
     }, []);
 
     // Helper function to compare times
-    const isTimeInRange = (eventTime, start, end) => {
+    const isTimeInRange = (eventTime: string, start: string, end: string) => {
         if (!start && !end) return true;
 
         // Handle time ranges (e.g. "10:00 - 12:00")
