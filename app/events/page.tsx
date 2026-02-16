@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import EventCard from '@/components/EventCard';
 import SearchWidget from '@/components/SearchWidget';
-import { mockEvents, categories } from '@/lib/mockData';
+import { categories } from '@/lib/mockData';
+import { subscribeEvents } from '@/lib/eventService';
 
 export default function EventsPage() {
     const router = useRouter();
@@ -14,18 +15,24 @@ export default function EventsPage() {
     const [startTime, setStartTime] = useState('');
     const [endTime, setEndTime] = useState('');
     const [location, setLocation] = useState('');
+    const [appliedFilters, setAppliedFilters] = useState({
+        searchTerm: '',
+        selectedCategory: 'All',
+        selectedDate: '',
+        startTime: '',
+        endTime: '',
+        location: ''
+    });
 
     const [events, setEvents] = useState<any[]>([]);
 
     // Load events from localStorage or seed with mock data
     useEffect(() => {
-        const storedEvents = localStorage.getItem('events');
-        if (storedEvents) {
-            setEvents(JSON.parse(storedEvents));
-        } else {
-            localStorage.setItem('events', JSON.stringify(mockEvents));
-            setEvents(mockEvents);
-        }
+        // Subscribe to Firestore events collection
+        const unsub = subscribeEvents((docs) => {
+            setEvents(docs || []);
+        });
+        return () => unsub && unsub();
     }, []);
 
     // Helper function to compare times
@@ -55,14 +62,14 @@ export default function EventsPage() {
         return eventMinutes >= startMinutes && eventMinutes <= endMinutes;
     };
 
-    // Filter events based on all criteria
+    // Filter events based on applied filters (only when user clicks Apply)
     const filteredEvents = events.filter(event => {
-        const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            event.description.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchesCategory = selectedCategory === 'All' || event.category === selectedCategory;
-        const matchesDate = !selectedDate || event.date === selectedDate;
-        const matchesTime = isTimeInRange(event.time, startTime, endTime);
-        const matchesLocation = !location || event.location.toLowerCase().includes(location.toLowerCase());
+        const matchesSearch = event.title.toLowerCase().includes(appliedFilters.searchTerm.toLowerCase()) ||
+            event.description.toLowerCase().includes(appliedFilters.searchTerm.toLowerCase());
+        const matchesCategory = appliedFilters.selectedCategory === 'All' || event.category === appliedFilters.selectedCategory;
+        const matchesDate = !appliedFilters.selectedDate || event.date === appliedFilters.selectedDate;
+        const matchesTime = isTimeInRange(event.time, appliedFilters.startTime, appliedFilters.endTime);
+        const matchesLocation = !appliedFilters.location || event.location.toLowerCase().includes(appliedFilters.location.toLowerCase());
 
         return matchesSearch && matchesCategory && matchesDate && matchesTime && matchesLocation;
     });
@@ -83,6 +90,17 @@ export default function EventsPage() {
                 location={location}
                 setLocation={setLocation}
                 categories={categories}
+                // Apply filters only when user clicks Apply; reset clears both input and applied filters
+                onApply={() => setAppliedFilters({ searchTerm, selectedCategory, selectedDate, startTime, endTime, location })}
+                onReset={() => {
+                    setSearchTerm('');
+                    setSelectedCategory('All');
+                    setSelectedDate('');
+                    setStartTime('');
+                    setEndTime('');
+                    setLocation('');
+                    setAppliedFilters({ searchTerm: '', selectedCategory: 'All', selectedDate: '', startTime: '', endTime: '', location: '' });
+                }}
             />
 
             <div className="events-section">

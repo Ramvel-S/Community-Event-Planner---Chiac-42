@@ -9,6 +9,7 @@ export default function Navbar() {
     const pathname = usePathname();
     const [user, setUser] = useState(null);
     const [isGuest, setIsGuest] = useState(false);
+    const [theme, setTheme] = useState('light');
 
     useEffect(() => {
         const checkAuth = () => {
@@ -27,6 +28,11 @@ export default function Navbar() {
         // Run on mount and whenever the pathname changes (route navigation)
         checkAuth();
 
+        // Load theme preference
+        const storedTheme = localStorage.getItem('theme') || 'light';
+        setTheme(storedTheme);
+        if (storedTheme === 'dark') document.documentElement.classList.add('dark');
+
         // Listen for cross-tab/localStorage changes
         const onStorage = () => checkAuth();
         window.addEventListener('storage', onStorage);
@@ -42,6 +48,14 @@ export default function Navbar() {
         setUser(null);
         setIsGuest(false);
         router.push('/');
+    };
+
+    const toggleTheme = () => {
+        const next = theme === 'dark' ? 'light' : 'dark';
+        setTheme(next);
+        localStorage.setItem('theme', next);
+        if (next === 'dark') document.documentElement.classList.add('dark');
+        else document.documentElement.classList.remove('dark');
     };
 
     const handleSignIn = () => {
@@ -87,16 +101,17 @@ export default function Navbar() {
                     Community Event Planner
                 </Link>
                 <div className="navbar-right">
-                    {isEventsPage && (
-                        <>
-                            <button
-                                onClick={handleCreateEventClick}
-                                className="btn btn-primary"
-                            >
-                                Create Event
-                            </button>
+                    <button onClick={toggleTheme} className="btn" style={{ marginRight: '0.5rem' }} aria-label="Toggle theme">{theme === 'dark' ? '🌙' : '☀️'}</button>
+                    {user && !isGuest ? (
+                        isEventsPage ? (
+                            <>
+                                <button
+                                    onClick={handleCreateEventClick}
+                                    className="btn btn-primary"
+                                >
+                                    Create Event
+                                </button>
 
-                            {user && (
                                 <div
                                     className="navbar-user"
                                     onClick={handleAccountClick}
@@ -105,19 +120,17 @@ export default function Navbar() {
                                     <span className="navbar-user-icon">👤</span>
                                     <span>{user.username}</span>
                                 </div>
-                            )}
-                        </>
-                    )}
-
-                    {!isEventsPage && (user && !isGuest ? (
-                        <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
-                            Logout
-                        </button>
+                            </>
+                        ) : (
+                            <button onClick={handleLogout} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
+                                Logout
+                            </button>
+                        )
                     ) : (
                         <button onClick={handleSignIn} className="btn btn-secondary" style={{ padding: '0.5rem 1rem', fontSize: '0.9rem' }}>
                             Sign In
                         </button>
-                    ))}
+                    )}
                 </div>
             </div>
         </nav>

@@ -29,11 +29,10 @@ export default function EditEventPage() {
             return;
         }
 
-        // Fetch event from localStorage
+        // Fetch event from Firestore (via subscription handled in event details page)
         const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        // Fallback to mockEvents just in case
-        const allEvents = storedEvents.length > 0 ? storedEvents : mockEvents;
-        const foundEvent = allEvents.find((e: any) => e.id === eventId);
+        const allEvents = storedEvents.length > 0 ? storedEvents : [];
+        const foundEvent = allEvents.find((e: any) => e.id === eventId) || null;
         setEvent(foundEvent);
 
         if (foundEvent) {
@@ -82,8 +81,8 @@ export default function EditEventPage() {
             : formData.startTime;
 
         // Update event in localStorage
-        const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        const updatedEvents = storedEvents.map((e: any) => {
+        const storedEvents2 = JSON.parse(localStorage.getItem('events') || '[]');
+        const updatedEvents = storedEvents2.map((e: any) => {
             if (e.id === eventId) {
                 return {
                     ...e,
@@ -98,9 +97,10 @@ export default function EditEventPage() {
             return e;
         });
 
+        // Optimistically update localStorage for offline UX; Firestore update will be handled elsewhere or via a follow-up action
         localStorage.setItem('events', JSON.stringify(updatedEvents));
 
-        alert('Event updated successfully! ✅');
+        alert('Event updated locally. If using Firestore, please sync or re-open the event to refresh.');
         router.push(`/events/${eventId}`);
     };
 

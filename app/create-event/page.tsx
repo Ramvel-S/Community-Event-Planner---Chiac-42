@@ -3,6 +3,7 @@
 import { useState, useEffect, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { categories } from '@/lib/mockData';
+import { createEvent } from '@/lib/eventService';
 
 export default function CreateEventPage() {
     const router = useRouter();
@@ -32,7 +33,7 @@ export default function CreateEventPage() {
         }
     }, [router]);
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
         // Form the time range string
@@ -44,34 +45,26 @@ export default function CreateEventPage() {
         const stored = localStorage.getItem('loggedInUser');
         const loggedInUser = stored ? JSON.parse(stored) : null;
 
-        // Create new event object
+        // Create new event object (do NOT auto-add creator to attendees)
         const newEvent = {
-            id: Date.now(), // Use timestamp for unique ID
             title: formData.title,
             date: formData.date,
             time: timeRange,
             location: formData.location,
             category: formData.category,
             description: formData.description,
-            created_by: loggedInUser ? loggedInUser.id : 0, // Fallback if issue with user
-            attendees: [{
-                id: loggedInUser ? loggedInUser.id : 0,
-                username: loggedInUser ? loggedInUser.username : 'Guest'
-            }] // Creator automatically attends
+            created_by: loggedInUser ? loggedInUser.id : 'guest',
+            attendees: []
         };
 
-        // Get existing events or initialize
-        const existingEvents = JSON.parse(localStorage.getItem('events') || '[]');
-
-        // Add new event
-        const updatedEvents = [...existingEvents, newEvent];
-
-        // Save back to localStorage
-        localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-        console.log('Created event:', newEvent);
-        alert('Event created successfully! 🎉');
-        router.push('/events');
+        try {
+            await createEvent(newEvent);
+            alert('Event created successfully! 🎉');
+            router.push('/events');
+        } catch (err: any) {
+            console.error(err);
+            alert('Failed to create event');
+        }
     };
 
     return (

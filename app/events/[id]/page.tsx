@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { mockEvents } from '@/lib/mockData';
+import { subscribeEvents, toggleRSVP, deleteEvent } from '@/lib/eventService';
 
 export default function EventDetailsPage() {
     const router = useRouter();
     const params = useParams();
-    const eventId = parseInt(Array.isArray(params?.id) ? params.id[0] : String(params?.id));
+    const docId = Array.isArray(params?.id) ? params.id[0] : String(params?.id);
 
     const [event, setEvent] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
@@ -15,44 +15,41 @@ export default function EventDetailsPage() {
     const [hasRSVPd, setHasRSVPd] = useState(false);
 
     useEffect(() => {
-        // Fetch event from localStorage
-        const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        // Fallback to mockEvents if localStorage is empty (shouldn't happen due to initialization in events page)
-        const allEvents = storedEvents.length > 0 ? storedEvents : mockEvents;
+        let unsub: any = null;
+        (async () => {
+            // Subscribe to the events collection and pull the matching event
+            unsub = subscribeEvents((docs) => {
+                const found = (docs || []).find((d: any) => d.id === docId);
+                setEvent(found || null);
 
-        const foundEvent = allEvents.find((e: any) => e.id === eventId);
-        setEvent(foundEvent);
+                if (!found) return;
 
-        if (!foundEvent) return;
+                // Check if user is in guest mode
+                const guestMode = localStorage.getItem('guestMode');
+                if (guestMode === 'true') {
+                    setIsGuest(true);
+                    return;
+                }
 
-        // Check if user is in guest mode
-        const guestMode = localStorage.getItem('guestMode');
-        if (guestMode === 'true') {
-            setIsGuest(true);
-            return;
-        }
+                // Check if user is logged in
+                const loggedInUser = localStorage.getItem('loggedInUser');
+                if (!loggedInUser) {
+                    // Not logged in and not guest - redirect to login
+                    router.push('/');
+                    return;
+                }
 
-        // Check if user is logged in
-        const loggedInUser = localStorage.getItem('loggedInUser');
-        if (!loggedInUser) {
-            // Not logged in and not guest - redirect to login
-            router.push('/');
-            return;
-        }
+                const userData = JSON.parse(loggedInUser);
+                setUser(userData);
 
-        const userData = JSON.parse(loggedInUser);
-        setUser(userData);
+                // Check if user is in attendees list
+                const isAttending = Array.isArray(found.attendees) && found.attendees.some((a: any) => a.id === userData.id);
+                setHasRSVPd(!!isAttending);
+            });
+        })();
 
-        // Check if user is in attendees list
-        const isAttending = foundEvent.attendees.some((a: any) => a.id === userData.id);
-        setHasRSVPd(isAttending);
-
-        // Also check legacy localStorage key just in case
-        const rsvpKey = `rsvp_${userData.id}_${eventId}`;
-        const rsvpStatus = localStorage.getItem(rsvpKey);
-        if (rsvpStatus === 'true') setHasRSVPd(true);
-
-    }, [router, eventId]);
+        return () => unsub && unsub();
+    }, [router, docId]);
 
     if (!event) {
         return (
@@ -73,45 +70,16 @@ export default function EventDetailsPage() {
 
     const handleRSVP = () => {
         if (!user || !event) return;
-
-        const newRSVPStatus = !hasRSVPd;
-        setHasRSVPd(newRSVPStatus);
-
-        // Update event attendees in localStorage
-        const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        const updatedEvents = storedEvents.map((e: any) => {
-            if (e.id === event.id) {
-                let updatedAttendees = [...e.attendees];
-                if (newRSVPStatus) {
-                    // Add user to attendees if not already there
-                    if (!updatedAttendees.some((a: any) => a.id === user.id)) {
-                        updatedAttendees.push({ id: user.id, username: user.username });
-                    }
-                } else {
-                    // Remove user from attendees
-                    updatedAttendees = updatedAttendees.filter((a: any) => a.id !== user.id);
-                }
-                // Update the local event object as well to reflect immediately in UI
-                setEvent({ ...e, attendees: updatedAttendees });
-                return { ...e, attendees: updatedAttendees };
-            }
-            return e;
+        // Toggle RSVP via Firestore. We pass uid & username.
+        const currentUser = { uid: user.id, username: user.username };
+        // Optimistically update UI
+        setHasRSVPd(!hasRSVPd);
+        toggleRSVP(event.id, currentUser).catch((err) => {
+            console.error('toggleRSVP failed', err);
+            // revert optimistic update on failure
+            setHasRSVPd(hasRSVPd);
+            alert('Failed to update RSVP. Please try again.');
         });
-
-        localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-        // Legacy support
-        const rsvpKey = `rsvp_${user.id}_${eventId}`;
-        localStorage.setItem(rsvpKey, newRSVPStatus.toString());
-
-        if (newRSVPStatus) {
-
-            if (newRSVPStatus) {
-                alert('RSVP confirmed! See you at the event! 🎉');
-            } else {
-                alert('RSVP cancelled. Hope to see you at another event!');
-            }
-        };
     }
 
     const handleEdit = () => {
@@ -120,12 +88,17 @@ export default function EventDetailsPage() {
 
     const handleDelete = () => {
         if (confirm('Are you sure you want to delete this event?')) {
-            const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-            const updatedEvents = storedEvents.filter((e: any) => e.id !== event.id);
-            localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-            alert('Event deleted successfully!');
-            router.push('/events');
+                        // call Firestore delete (only owner allowed)
+                        const currentUser = { uid: user.id };
+                        deleteEvent(event.id, currentUser)
+                            .then(() => {
+                                alert('Event deleted successfully!');
+                                router.push('/events');
+                            })
+                            .catch((err) => {
+                                console.error('deleteEvent failed', err);
+                                alert(err.message || 'Failed to delete event');
+                            });
         }
     };
 
@@ -150,6 +123,10 @@ export default function EventDetailsPage() {
                     <div className="event-info-item">
                         <strong>🏷️ Category</strong>
                         <span>{event.category}</span>
+                    </div>
+                    <div className="event-info-item">
+                        <strong>🆔 Event ID</strong>
+                        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>{event.id}</span>
                     </div>
                 </div>
 
@@ -210,7 +187,7 @@ export default function EventDetailsPage() {
                     <div className="attendees-list">
                         {event.attendees.map((attendee: any) => (
                             <span key={attendee.id} className="attendee-badge">
-                                👤 {attendee.username}
+                                👤 {attendee.id === (user?.id) ? 'Me' : attendee.username}
                             </span>
                         ))}
                     </div>

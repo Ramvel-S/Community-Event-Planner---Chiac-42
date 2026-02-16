@@ -13,8 +13,26 @@ export default function SearchWidget({
     setEndTime,
     location,
     setLocation,
-    categories
+    categories,
+    onApply = () => {},
+    onReset = () => {},
+    collapsed = false,
+    onToggleCollapsed = () => {}
 }) {
+    if (collapsed) {
+        return (
+            <div className="search-widget search-widget-collapsed" style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <h3 style={{ margin: 0 }}>🔍 Filters</h3>
+                    <div>
+                        <button type="button" className="btn" onClick={() => { onToggleCollapsed(false); }} style={{ marginRight: '0.5rem' }}>Show</button>
+                        <button type="button" className="btn btn-primary" onClick={() => onApply()}>Apply</button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="search-widget">
             <h3>🔍 Search & Filter Events</h3>
@@ -80,6 +98,10 @@ export default function SearchWidget({
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                     />
+                </div>
+                <div className="filter-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '0.75rem' }}>
+                    <button type="button" className="btn btn-reset" onClick={() => onReset ? onReset() : null}>Reset</button>
+                    <button type="button" className="btn btn-primary" onClick={() => { if (onApply) onApply(); if (onToggleCollapsed) onToggleCollapsed(true); }}>Apply Filters</button>
                 </div>
             </div>
         </div>
