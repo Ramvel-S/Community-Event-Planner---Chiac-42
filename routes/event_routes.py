@@ -3,25 +3,11 @@ from flask_jwt_extended import jwt_required
 from db import get_db
 
 events_bp = Blueprint("events", __name__)
-from flask_jwt_extended import create_access_token
 
-@events_bp.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-
-    username = data.get("username")
-    password = data.get("password")
-
-    # Temporary hardcoded check (for testing)
-    if username == "zaid" and password == "1234":
-        access_token = create_access_token(identity=username)
-        return jsonify(access_token=access_token), 200
-
-    return jsonify({"error": "Invalid credentials"}), 401
 
 
 @events_bp.route("/events", methods=["GET"])
-#@jwt_required()     # when Task 1 is ready uncomment this line to require authentication for this endpoint
+@jwt_required()     
 def list_events():
     db = get_db()
 
