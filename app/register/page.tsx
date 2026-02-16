@@ -3,6 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { firebaseSignUp, firebaseUpdateProfile } from '@/lib/firebase';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -14,7 +15,7 @@ export default function RegisterPage() {
     });
     const [error, setError] = useState('');
 
-    const handleSubmit = (e: FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -30,9 +31,20 @@ export default function RegisterPage() {
             return;
         }
 
-        // UI only - simulate registration success
-        alert(`Account created successfully for ${formData.username}!`);
-        router.push('/');
+        try {
+            const cred = await firebaseSignUp(formData.email, formData.password);
+            // set display name
+            await firebaseUpdateProfile({ displayName: formData.username });
+            localStorage.setItem('loggedInUser', JSON.stringify({
+                id: cred.user.uid,
+                username: formData.username,
+                email: cred.user.email
+            }));
+            alert(`Account created successfully for ${formData.username}!`);
+            router.push('/');
+        } catch (err: any) {
+            setError(err?.message || 'Registration failed');
+        }
     };
 
     return (

@@ -11,28 +11,45 @@ export default function Navbar() {
     const [isGuest, setIsGuest] = useState(false);
 
     useEffect(() => {
-        // Check if user is in guest mode
-        const guestMode = localStorage.getItem('guestMode');
-        if (guestMode === 'true') {
-            setIsGuest(true);
-            return;
-        }
+        const checkAuth = () => {
+            try {
+                const guestMode = localStorage.getItem('guestMode');
+                setIsGuest(guestMode === 'true');
 
-        // Get logged-in user from localStorage
-        const loggedInUser = localStorage.getItem('loggedInUser');
-        if (loggedInUser) {
-            setUser(JSON.parse(loggedInUser));
-        }
-    }, []);
+                const loggedInUser = localStorage.getItem('loggedInUser');
+                setUser(loggedInUser ? JSON.parse(loggedInUser) : null);
+            } catch (e) {
+                setIsGuest(false);
+                setUser(null);
+            }
+        };
+
+        // Run on mount and whenever the pathname changes (route navigation)
+        checkAuth();
+
+        // Listen for cross-tab/localStorage changes
+        const onStorage = () => checkAuth();
+        window.addEventListener('storage', onStorage);
+
+        return () => {
+            window.removeEventListener('storage', onStorage);
+        };
+    }, [pathname]);
 
     const handleLogout = () => {
         localStorage.removeItem('loggedInUser');
         localStorage.removeItem('guestMode');
+        setUser(null);
+        setIsGuest(false);
         router.push('/');
     };
 
     const handleSignIn = () => {
         localStorage.removeItem('guestMode');
+        setIsGuest(false);
+        // attempt to pick up any existing loggedInUser immediately
+        const loggedInUser = localStorage.getItem('loggedInUser');
+        if (loggedInUser) setUser(JSON.parse(loggedInUser));
         router.push('/');
     };
 

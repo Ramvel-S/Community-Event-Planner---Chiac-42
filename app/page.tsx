@@ -3,7 +3,7 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { mockUsers } from '@/lib/mockData';
+import { firebaseSignIn } from '@/lib/firebase';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -14,31 +14,22 @@ export default function LoginPage() {
   });
   const [error, setError] = useState('');
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Find user in mock data
-    const user = mockUsers.find(
-      u => u.username === formData.username &&
-        u.email === formData.email &&
-        u.password === formData.password
-    );
-
-    if (user) {
-      // Clear guest mode if it was set
+    try {
+      const cred = await firebaseSignIn(formData.email, formData.password);
+      const user = cred.user;
       localStorage.removeItem('guestMode');
-      // Store user in localStorage
       localStorage.setItem('loggedInUser', JSON.stringify({
-        id: user.id,
-        username: user.username,
+        id: user.uid,
+        username: user.displayName || formData.username,
         email: user.email
       }));
-
-      // Redirect to events page
       router.push('/events');
-    } else {
-      setError('Invalid credentials. Please try again.');
+    } catch (err: any) {
+      setError(err?.message || 'Sign in failed');
     }
   };
 
@@ -129,19 +120,7 @@ export default function LoginPage() {
         </button>
       </div>
 
-      <div style={{
-        marginTop: '2rem',
-        padding: '1rem',
-        backgroundColor: '#f0f8ff',
-        borderRadius: '6px',
-        fontSize: '0.85rem',
-        color: '#555'
-      }}>
-        <strong>Demo Credentials:</strong><br />
-        Username: demoUser<br />
-        Email: demo@example.com<br />
-        Password: password123
-      </div>
+      
     </div>
   );
 }

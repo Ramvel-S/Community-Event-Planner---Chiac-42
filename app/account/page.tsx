@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { firebaseSignOut as fbSignOut } from '@/lib/firebase';
 
 export default function AccountPage() {
     const router = useRouter();
@@ -27,6 +28,11 @@ export default function AccountPage() {
     }, [router]);
 
     const handleSignOut = () => {
+        try {
+            fbSignOut();
+        } catch (e) {
+            // ignore if not signed into Firebase
+        }
         localStorage.removeItem('loggedInUser');
         localStorage.removeItem('guestMode');
         router.push('/');
