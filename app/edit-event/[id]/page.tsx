@@ -1,15 +1,18 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { mockEvents, categories } from '@/lib/mockData';
+import { categories } from '@/lib/mockData';
+import { getEventById, updateEvent, getCurrentUser, isEventOwner, Event } from '@/lib/eventUtils';
 
 export default function EditEventPage() {
     const router = useRouter();
     const params = useParams();
-    const eventId = parseInt(params.id);
+    const eventId = parseInt(params.id as string);
 
-    const [event, setEvent] = useState(null);
+    const [event, setEvent] = useState<Event | null>(null);
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(true);
 
     const [formData, setFormData] = useState({
         title: '',
@@ -23,91 +26,134 @@ export default function EditEventPage() {
 
     useEffect(() => {
         // Check if user is logged in
-        const loggedInUser = localStorage.getItem('loggedInUser');
-        if (!loggedInUser) {
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
             router.push('/');
             return;
         }
 
-        // Fetch event from localStorage
-        const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        // Fallback to mockEvents just in case
-        const allEvents = storedEvents.length > 0 ? storedEvents : mockEvents;
-        const foundEvent = allEvents.find(e => e.id === eventId);
+        // Get event using utility function
+        const foundEvent = getEventById(eventId);
+        
+        if (!foundEvent) {
+            setError('Event not found');
+            setLoading(false);
+            return;
+        }
+
+        // Check authorization
+        if (!isEventOwner(foundEvent, currentUser)) {
+            setError('You are not authorized to edit this event');
+            setLoading(false);
+            return;
+        }
+
         setEvent(foundEvent);
 
-        if (foundEvent) {
-            // Parse existing time string to separate start and end times
-            let start = '';
-            let end = '';
+        // Parse existing time string to separate start and end times
+        let start = '';
+        let end = '';
 
-            if (foundEvent.time) {
-                if (foundEvent.time.includes(' - ')) {
-                    const parts = foundEvent.time.split(' - ');
-                    start = parts[0];
-                    end = parts[1];
-                } else {
-                    start = foundEvent.time;
-                }
+        if (foundEvent.time) {
+            if (foundEvent.time.includes(' - ')) {
+                const parts = foundEvent.time.split(' - ');
+                start = parts[0];
+                end = parts[1];
+            } else {
+                start = foundEvent.time;
             }
-
-            setFormData({
-                title: foundEvent.title,
-                date: foundEvent.date,
-                startTime: start,
-                endTime: end,
-                location: foundEvent.location,
-                category: foundEvent.category,
-                description: foundEvent.description
-            });
         }
+
+        setFormData({
+            title: foundEvent.title,
+            date: foundEvent.date,
+            startTime: start,
+            endTime: end,
+            location: foundEvent.location,
+            category: foundEvent.category,
+            description: foundEvent.description
+        });
+
+        setLoading(false);
     }, [eventId, router]);
 
-    if (!event) {
+    if (loading) {
         return (
             <div className="container">
                 <div className="form-container">
-                    <h1>Event Not Found</h1>
-                    <p>The event you're trying to edit doesn't exist.</p>
+                    <h1>Loading...</h1>
                 </div>
             </div>
         );
     }
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    if (error) {
+        return (
+            <div className="container">
+                <div className="form-container">
+                    <h1>Error</h1>
+                    <p style={{ color: 'var(--error-color, #dc3545)' }}>{error}</p>
+                    <button 
+                        onClick={() => router.push('/events')} 
+                        className="btn btn-secondary"
+                    >
+                        Back to Events
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        setError('');
+
+        const currentUser = getCurrentUser();
+        if (!currentUser) {
+            setError('You must be logged in to edit events');
+            return;
+        }
+
+        // Form the time range string
         const timeRange = formData.startTime && formData.endTime
             ? `${formData.startTime} - ${formData.endTime}`
             : formData.startTime;
 
-        // Update event in localStorage
-        const storedEvents = JSON.parse(localStorage.getItem('events') || '[]');
-        const updatedEvents = storedEvents.map(e => {
-            if (e.id === eventId) {
-                return {
-                    ...e,
-                    title: formData.title,
-                    date: formData.date,
-                    time: timeRange,
-                    location: formData.location,
-                    category: formData.category,
-                    description: formData.description
-                };
-            }
-            return e;
-        });
+        // Update event using utility function with authorization
+        const result = updateEvent(eventId, {
+            title: formData.title,
+            date: formData.date,
+            time: timeRange,
+            location: formData.location,
+            category: formData.category,
+            description: formData.description
+        }, currentUser);
 
-        localStorage.setItem('events', JSON.stringify(updatedEvents));
-
-        alert('Event updated successfully! ✅');
-        router.push(`/events/${eventId}`);
+        if (result.success) {
+            alert('Event updated successfully! ✅');
+            router.push(`/events/${eventId}`);
+        } else {
+            setError(result.message);
+        }
     };
 
     return (
         <div className="form-container">
             <h1>Edit Event</h1>
             <p className="form-subtitle">Update your event details</p>
+
+            {error && (
+                <div style={{ 
+                    backgroundColor: '#f8d7da', 
+                    color: '#721c24', 
+                    padding: '12px', 
+                    borderRadius: '4px', 
+                    marginBottom: '1rem',
+                    border: '1px solid #f5c6cb'
+                }}>
+                    {error}
+                </div>
+            )}
 
             <form onSubmit={handleSubmit}>
                 <div className="form-group">
