@@ -1,44 +1,218 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🚀 Community Event Planner
 
-## Getting Started
+A modern web application built using **Next.js** and **Firebase** that allows users to discover, create, and manage community events in real time.
 
-First, run the development server:
+This project demonstrates a clean full-stack architecture with reusable components, real-time database updates, and secure authentication.
+
+---
+
+## ✨ Overview
+
+Community Event Planner helps users:
+
+✅ Browse upcoming events
+✅ View detailed event information
+✅ Create and manage their own events
+✅ RSVP to events
+✅ Experience real-time updates powered by Firebase
+
+The application uses Next.js App Router architecture combined with Firebase backend services.
+
+---
+
+## 🧠 Tech Stack
+
+### Frontend
+
+* ⚛️ React
+* 🚀 Next.js (App Router)
+* 🟦 TypeScript
+* 🎨 CSS Modules + Global CSS
+
+### Backend Services
+
+* 🔥 Firebase Authentication
+* 🗄️ Firebase Firestore Database
+
+### Tooling
+
+* ESLint (code quality)
+* Modern Next.js architecture
+
+---
+
+## 📂 Project Structure
+
+```
+community-event-planner/
+│
+├── app/                     # Next.js pages and routing
+│   ├── page.tsx             # Home / signup page
+│   ├── events/
+│   │   ├── page.tsx         # Events list
+│   │   └── [id]/page.tsx    # Event details (dynamic route)
+│   ├── create-event/        # Create event page
+│   ├── edit-event/[id]/     # Edit event page
+│   └── layout.tsx           # Global layout (Navbar, styles)
+│
+├── components/              # Reusable UI components
+│   ├── Navbar
+│   ├── EventCard
+│   └── SearchWidget
+│
+├── lib/
+│   ├── firebase.ts          # Firebase initialization + auth helpers
+│   └── eventService.ts      # Event business logic
+│
+├── globals.css              # Global styles
+└── README.md
+```
+
+---
+
+## 🏗️ Architecture Overview
+
+The project follows a clean layered architecture:
+
+```
+UI Pages (Next.js app/)
+        ↓
+Reusable Components
+        ↓
+Event Service (business logic)
+        ↓
+Firebase Setup (auth + database)
+        ↓
+Firebase Backend
+```
+
+This separation keeps the code:
+
+* Maintainable
+* Scalable
+* Easy to understand
+
+---
+
+## 🔥 Key Features Explained
+
+### 🧭 File-Based Routing (Next.js)
+
+Routes are automatically generated from folder structure:
+
+```
+app/page.tsx            → /
+app/events/page.tsx     → /events
+app/events/[id]/        → /events/:id
+```
+
+---
+
+### ⚡ Real-Time Updates
+
+Uses Firestore `onSnapshot()`:
+
+* Events update automatically
+* No page refresh needed
+
+---
+
+### 🔐 Authentication
+
+Firebase Auth handles:
+
+* User signup
+* Login
+* Logout
+* Profile updates
+
+---
+
+### 🎯 Business Logic Separation
+
+* `firebase.ts` → Firebase initialization + auth helpers
+* `eventService.ts` → All event-related logic
+
+This improves readability and maintainability.
+
+---
+
+## 🚀 Getting Started
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone <your-repo-url>
+cd community-event-planner
+```
+
+---
+
+### 2️⃣ Install dependencies
+
+```bash
+npm install
+```
+
+---
+
+### 3️⃣ Setup Environment Variables
+
+Create `.env.local`:
+
+```
+NEXT_PUBLIC_FIREBASE_API_KEY=...
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=...
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=...
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=...
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=...
+NEXT_PUBLIC_FIREBASE_APP_ID=...
+```
+
+---
+
+### 4️⃣ Run development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🧪 Learning Goals
 
-To learn more about Next.js, take a look at the following resources:
+This project demonstrates:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+* Next.js App Router architecture
+* Dynamic routing
+* Component-based design
+* Firebase integration
+* Clean separation of concerns
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 👨‍💻 Author
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Bhuvan T Raj
 
-# Community Event Planner App
+---
 
-## Overview
-The Community Event Planner App is a prototype web application that allows users to create, discover, and participate in community events.  
+## ⭐ Future Improvements
 
-Users can log in, organize events, RSVP to events, and view attendees. The system uses a shared interface for all users, where a user becomes an organizer by creating an event.
+* Event categories filtering
+* Better UI animations
+* Pagination
+* Admin dashboard
 
+---
+
+## 📄 License
+
+This project is for learning and demonstration purposes.
