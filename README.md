@@ -16,6 +16,14 @@ A user becomes an organizer simply by creating an event.
 
 ---
 
+## 🌐 Live Deployment
+
+The application is deployed on Vercel and can be accessed here:
+
+https://community-event-planner.vercel.app/
+
+---
+
 ## 🚀 Core Features
 
 ### 🔐 Authentication
