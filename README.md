@@ -214,7 +214,7 @@ http://localhost:3000
 
 Bhuvan → Frontend UI development  
 Rayan → Authentication implementation  
-Ramvel → Database design (MySQL schema)  
+Ramvel → Database implementation  
 Abhishek → RSVP logic  
 Manohar → Event management logic (Create, Edit, Delete operations)  
 Zaid → Event listing, search, and filter logic  
